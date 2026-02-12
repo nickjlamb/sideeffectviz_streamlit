@@ -48,11 +48,12 @@ def perform_clustering_analysis(df, n_clusters=3):
     )
     
     # Check if we have enough data for clustering
-    if len(pivot_df) < 2:
+    if len(pivot_df) < 3:
         return None, None, None, None
     
-    if len(pivot_df) < n_clusters:
-        n_clusters = max(2, min(n_clusters, len(pivot_df)))
+    if n_clusters >= len(pivot_df):
+        n_clusters = len(pivot_df) - 1
+    n_clusters = max(2, n_clusters)
     
     # Standardize the data
     scaler = StandardScaler()
@@ -70,14 +71,16 @@ def perform_clustering_analysis(df, n_clusters=3):
     clustered_df['cluster'] = cluster_labels
     
     # Perform PCA for visualization
-    pca = PCA(n_components=2)
+    n_pca = min(2, len(pivot_df), len(pivot_df.columns))
+    pca = PCA(n_components=n_pca)
     principal_components = pca.fit_transform(scaled_data)
     
     # Create DataFrame with PCA results
-    pca_df = pd.DataFrame(
-        data=principal_components, 
-        columns=['PC1', 'PC2']
-    )
+    if n_pca == 1:
+        pca_df = pd.DataFrame(data=principal_components, columns=['PC1'])
+        pca_df['PC2'] = 0
+    else:
+        pca_df = pd.DataFrame(data=principal_components, columns=['PC1', 'PC2'])
     pca_df['medication'] = pivot_df.index
     pca_df['cluster'] = cluster_labels
     
