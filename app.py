@@ -454,7 +454,7 @@ def create_network_graph(df, selected_medication=None, selected_category=None, s
 
 # Add a toggle in the sidebar to switch between sample and real data
 st.sidebar.header("Data Source")
-use_real_data = st.sidebar.checkbox("Use real FAERS data", value=False)
+use_real_data = st.sidebar.checkbox("Use real FAERS data", value=True)
 
 if use_real_data:
     df = get_faers_data(limit=1000)  # Start with 1000 records
