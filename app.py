@@ -48,9 +48,11 @@ def perform_clustering_analysis(df, n_clusters=3):
     )
     
     # Check if we have enough data for clustering
+    if len(pivot_df) < 2:
+        return None, None, None, None
+    
     if len(pivot_df) < n_clusters:
-        st.warning(f"Not enough medications ({len(pivot_df)}) for {n_clusters} clusters. Using {max(2, len(pivot_df)-1)} clusters instead.")
-        n_clusters = max(2, len(pivot_df)-1)
+        n_clusters = max(2, min(n_clusters, len(pivot_df)))
     
     # Standardize the data
     scaler = StandardScaler()
@@ -565,38 +567,43 @@ with tab4:
     n_clusters = st.slider("Number of Clusters", min_value=2, max_value=6, value=3)
     
     # Perform clustering
-    clustered_df, pca_df, silhouette_avg, cluster_profiles = perform_clustering_analysis(filtered_df, n_clusters)
+    result = perform_clustering_analysis(filtered_df, n_clusters)
     
-    # Display clustering metrics
-    st.metric("Silhouette Score", f"{silhouette_avg:.3f}", 
-              help="Measures how similar an object is to its own cluster compared to other clusters. Values range from -1 to 1, with higher values indicating better clustering.")
-    
-    # Create two columns for visualizations
-    cluster_col1, cluster_col2 = st.columns(2)
-    
-    # Visualize clustering results
-    scatter_fig, profiles_fig = visualize_clusters(pca_df, cluster_profiles, silhouette_avg)
-    
-    with cluster_col1:
-        st.plotly_chart(scatter_fig, use_container_width=True)
+    if result[0] is None:
+        st.info("Not enough medications in the current selection for clustering analysis. Select 'All Medications' or a broader filter to use this feature.")
+    else:
+        clustered_df, pca_df, silhouette_avg, cluster_profiles = result
         
-    with cluster_col2:
-        st.plotly_chart(profiles_fig, use_container_width=True)
-    
-    # Display medications in each cluster
-    st.subheader("Medications by Cluster")
-    
-    for cluster in range(n_clusters):
-        cluster_meds = clustered_df[clustered_df['cluster'] == cluster].index.tolist()
+        # Display clustering metrics
+        st.metric("Silhouette Score", f"{silhouette_avg:.3f}", 
+                  help="Measures how similar an object is to its own cluster compared to other clusters. Values range from -1 to 1, with higher values indicating better clustering.")
         
-        with st.expander(f"Cluster {cluster} ({len(cluster_meds)} medications)"):
-            st.write(", ".join(cluster_meds))
+        # Create two columns for visualizations
+        cluster_col1, cluster_col2 = st.columns(2)
+        
+        # Visualize clustering results
+        scatter_fig, profiles_fig = visualize_clusters(pca_df, cluster_profiles, silhouette_avg)
+        
+        with cluster_col1:
+            st.plotly_chart(scatter_fig, use_container_width=True)
             
-            # Get top side effects for this cluster
-            if cluster in cluster_profiles:
-                st.write("**Characteristic Side Effects:**")
-                for side_effect, freq in cluster_profiles[cluster].items():
-                    st.write(f"- {side_effect}: {freq:.1f}%")
+        with cluster_col2:
+            st.plotly_chart(profiles_fig, use_container_width=True)
+        
+        # Display medications in each cluster
+        st.subheader("Medications by Cluster")
+        
+        for cluster in range(n_clusters):
+            cluster_meds = clustered_df[clustered_df['cluster'] == cluster].index.tolist()
+            
+            with st.expander(f"Cluster {cluster} ({len(cluster_meds)} medications)"):
+                st.write(", ".join(cluster_meds))
+                
+                # Get top side effects for this cluster
+                if cluster in cluster_profiles:
+                    st.write("**Characteristic Side Effects:**")
+                    for side_effect, freq in cluster_profiles[cluster].items():
+                        st.write(f"- {side_effect}: {freq:.1f}%")
 
 # About section
 with st.expander("About SideEffectViz"):
