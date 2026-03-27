@@ -263,7 +263,7 @@ def get_faers_data(limit=1000):
             df = df.merge(freq_df[['drug_name', 'side_effect', 'frequency']], on=['drug_name', 'side_effect'])
         
         # Limit to top medications by frequency for better visualization
-        top_meds = df.groupby('drug_name')['frequency'].sum().nlargest(15).index.tolist()
+        top_meds = df.groupby('drug_name')['frequency'].sum().nlargest(25).index.tolist()
         df = df[df['drug_name'].isin(top_meds)]
         
         st.success(f"Successfully processed {len(df)} FAERS records")
