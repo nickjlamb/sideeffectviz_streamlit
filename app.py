@@ -163,9 +163,12 @@ def get_faers_data(limit=1000):
     # Use OpenFDA API to get adverse event data
     base_url = "https://api.fda.gov/drug/event.json"
     
+    # OpenFDA API allows a max of 100 results per request
+    api_limit = min(limit, 100)
+
     # Query parameters
     params = {
-        "limit": limit,
+        "limit": api_limit,
         "search": "receivedate:[20230101 TO 20231231]" # 2023 data
     }
     
